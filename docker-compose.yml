@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  elasticsearch:
+    image: elasticsearch:7.4.1
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+        #- bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms750m -Xmx750m"
+    ports:
+      - "9200:9200"
+  kibana:
+    image: kibana:7.4.1
+    ports:
+      - "5601:5601"
