@@ -16,10 +16,15 @@ from http.client import IncompleteRead
 import tweepy as tw
 
 
-consumer_key = '<Twitter_Consumer_Key>'
-consumer_secret = '<Twitter_Consumer_Secret>'
-access_token = '<Twitter_Access_Token>'
-access_token_secret = '<Twitter_Access_Token_Secret>'
+# consumer_key = '<Twitter_Consumer_Key>'
+# consumer_secret = '<Twitter_Consumer_Secret>'
+# access_token = '<Twitter_Access_Token>'
+# access_token_secret = '<Twitter_Access_Token_Secret>'
+
+consumer_key = "2bqLbdibv3Gs8xIYYpwluzkSG"
+consumer_secret = "cfQAOv6RohJUYP3UIz3iETfRIYo3Ua3NvKM8NriHMjRSATFkP9"
+access_token = "1374563238772273152-mqYqtsLQG9u1GIPnWeSQkNAsJDlYzT"
+access_token_secret = "vUESdHBtnzhpwlWgeCguhVwqaoALEgUipVTO3HYoAFrLA"
 
 
 # create instance of elasticsearch
