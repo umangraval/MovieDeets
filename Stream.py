@@ -6,6 +6,7 @@ from tweepy import Stream
 from textblob import TextBlob #predict the sentiment of Tweet, see 'https://textblob.readthedocs.io/en/dev/'
 from elasticsearch import Elasticsearch,helpers 
 import datetime
+from datetime import datetime
 import calendar
 import numpy as np
 from json import loads, dumps
@@ -14,7 +15,11 @@ import geocoder
 import yfinance as yf
 from http.client import IncompleteRead
 import tweepy as tw
+import praw
 
+#reddit = praw.Reddit(
+ #       user_agent="Comment section stream",
+  #      client_id
 
 # consumer_key = '<Twitter_Consumer_Key>'
 # consumer_secret = '<Twitter_Consumer_Secret>'
