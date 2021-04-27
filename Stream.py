@@ -15,6 +15,8 @@ import geocoder
 import yfinance as yf
 from http.client import IncompleteRead
 import tweepy as tw
+import tkinter as tk
+
 
 
 # consumer_key = '<Twitter_Consumer_Key>'
@@ -67,7 +69,7 @@ class TweetStreamListener(StreamListener):
                             "type": "keyword"
                         },
                         "date": {
-                            "type": "keyword"
+                            "type": "date"
                         },
                         "message": {
                             "type": "keyword"
@@ -115,33 +117,7 @@ def on_error(self, status):
     print(status)
 
 
-# def get_stock():
-#     data = yf.download('JBLU','2019-01-01','2019-10-01')
-#     df = data[['Close']]
-#     df.reset_index(inplace=True,drop=False)
-
-#     df_iter = df.iterrows()
-
-
-#     with open('fuel.csv') as fh:
-#         rd = csv.DictReader(fh, delimiter=',')
-#         for row in rd:
-#             r = loads(dumps(row))
-#             es.index(index="fuel-prices",
-#                     doc_type="test-type1",
-#                     body={
-#                         "date": datetime.strptime(r["date"], '%b %Y'),
-#                         "price": float(r['price'])})
-
-
-#     for index, document in df_iter:
-#             es.index(index="stock-a",
-#                 doc_type="test-type",
-#                 body={
-#                 "date": document["Date"],
-#                 "close_price": float(document["Close"])})
-
-# def tripadvisor():
+# def webscrape():
 #     rd = csv.DictReader(open('tripadv.csv'), delimiter='\t')
 #     data = [dict(d) for d in rd]
 #     try:
@@ -245,30 +221,53 @@ def singleAnalyzeTwitter(data):
                         "subjectivity": tweet.sentiment.subjectivity,
                         "sentiment": sentiment})
         
+def getMovieName ():
+    movie = entry1.get();
+    label1 = tk.Label(root, text="Check Kibana For Visualization")
+    canvas1.create_window(200, 230, window=label1)
+    root.destroy()
+    while True:
+        try:
+            stream = Stream(auth, listener)
+            stream.filter(track=[movie])
+            # tweets = tw.Cursor(api.search,
+            #   q="mortal kombat",
+            #   lang="en",
+            #   since=datetime.datetime.today()).items(15)
+        except IncompleteRead:
+            continue
+        except KeyboardInterrupt:
+            stream.disconnect()
+            break
 
 
 if __name__ == '__main__':
     listener = TweetStreamListener()
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)    
-    # tripadvisor()
-    # tweets = tweepy.Cursor(api.search, q ="@JetBlue -brown -tantum").items(10000)
+    # tweets = tweepy.Cursor(api.search, q ="@Mortal -brown -tantum").items(10000)
   
     # for tweet in tweets:
     #     print(tweet.user.location)
     #     singleAnalyzeTwitter(tweet._json)
+    root= tk.Tk()
+    canvas1 = tk.Canvas(root, width = 400, height = 300)
+    canvas1.pack()
 
-    while True:
-        try:
-            stream = Stream(auth, listener)
-            stream.filter(track=['jetblue'])
-            tweets = tw.Cursor(api.search,
-              q="jetblue",
-              lang="en",
-              since=datetime.datetime.today()).items(15)
-        except IncompleteRead:
-            continue
-        except KeyboardInterrupt:
-            stream.disconnect()
-            break
+    label1 = tk.Label(root, text='Search data for the movie')
+    label1.config(font=('helvetica', 14))
+    canvas1.create_window(200, 25, window=label1)
+
+    label2 = tk.Label(root, text='Enter movie name:')
+    label2.config(font=('helvetica', 10))
+    canvas1.create_window(200, 100, window=label2)
+
+    entry1 = tk.Entry (root) 
+    canvas1.create_window(200, 140, window=entry1)
+
+    button1 = tk.Button(text='Add', command=getMovieName, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
+    canvas1.create_window(200, 180, window=button1)
+    root.mainloop()
+
+    
 
