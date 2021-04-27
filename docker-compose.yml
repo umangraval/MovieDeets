@@ -10,6 +10,7 @@ services:
       - "ES_JAVA_OPTS=-Xms750m -Xmx750m"
     ports:
       - "9200:9200"
+
   kibana:
     image: kibana:7.4.1
     ports:

@@ -6,6 +6,7 @@ from tweepy import Stream
 from textblob import TextBlob #predict the sentiment of Tweet, see 'https://textblob.readthedocs.io/en/dev/'
 from elasticsearch import Elasticsearch,helpers 
 import datetime
+from datetime import datetime
 import calendar
 import numpy as np
 from json import loads, dumps
@@ -47,16 +48,55 @@ class TweetStreamListener(StreamListener):
             else:
                 sentiment = "positive"
             
-            print(sentiment, tweet.sentiment.polarity, dict_data["text"])
-            
-    
+            src = geocoder.osm(dict_data["user"]["location"]).latlng
+            if src == None:
+                src = [0,0]
+                        
             if len(dict_data["entities"]["hashtags"])>0:
                 hashtags=dict_data["entities"]["hashtags"][0]["text"].title()
             else:
                 hashtags="None"
-                      
-            es.index(index="logstash-a",
-                     doc_type="test-type",
+
+            mapping = {
+            "mappings": {
+                    "properties": {
+                        "author": {
+                            "type": "keyword"
+                        },
+                        "followers": {
+                            "type": "keyword"
+                        },
+                        "date": {
+                            "type": "keyword"
+                        },
+                        "message": {
+                            "type": "keyword"
+                        },
+                        "hashtags": {
+                            "type": "keyword"
+                        },
+                        "polarity": {
+                            "type": "keyword"
+                        },
+                        "subjectivity": {
+                            "type": "keyword"
+                        },
+                        "sentiment": {
+                            "type": "keyword"
+                        },
+                        "location": {
+                            "type": "geo_point"
+                        },
+                
+                }
+            }
+        }
+
+            es.indices.create(index='logstash-movie', body=mapping, ignore=400)
+            print(sentiment, tweet.sentiment.polarity, dict_data["text"], src[0], src[1])
+
+            es.index(index="logstash-movie",
+                    #  doc_type="test-type",
                      body={"author": dict_data["user"]["screen_name"],
                            "followers":dict_data["user"]["followers_count"],
                            #parse the milliscond since epoch to elasticsearch and reformat into datatime stamp in Kibana later
@@ -65,110 +105,113 @@ class TweetStreamListener(StreamListener):
                            "hashtags":hashtags,
                            "polarity": tweet.sentiment.polarity,
                            "subjectivity": tweet.sentiment.subjectivity,
-                           "sentiment": sentiment})
+                           "sentiment": sentiment,
+                           "location": {'lat':src[0],'lon':src[1]}})
+        
+        
         return True
         
 def on_error(self, status):
     print(status)
 
 
-def get_stock():
-    data = yf.download('JBLU','2019-01-01','2019-10-01')
-    df = data[['Close']]
-    df.reset_index(inplace=True,drop=False)
+# def get_stock():
+#     data = yf.download('JBLU','2019-01-01','2019-10-01')
+#     df = data[['Close']]
+#     df.reset_index(inplace=True,drop=False)
 
-    df_iter = df.iterrows()
-
-
-    with open('fuel.csv') as fh:
-        rd = csv.DictReader(fh, delimiter=',')
-        for row in rd:
-            r = loads(dumps(row))
-            es.index(index="fuel-prices",
-                    doc_type="test-type1",
-                    body={
-                        "date": datetime.strptime(r["date"], '%b %Y'),
-                        "price": float(r['price'])})
+#     df_iter = df.iterrows()
 
 
-    for index, document in df_iter:
-            es.index(index="stock-a",
-                doc_type="test-type",
-                body={
-                "date": document["Date"],
-                "close_price": float(document["Close"])})
+#     with open('fuel.csv') as fh:
+#         rd = csv.DictReader(fh, delimiter=',')
+#         for row in rd:
+#             r = loads(dumps(row))
+#             es.index(index="fuel-prices",
+#                     doc_type="test-type1",
+#                     body={
+#                         "date": datetime.strptime(r["date"], '%b %Y'),
+#                         "price": float(r['price'])})
 
-def tripadvisor():
-    rd = csv.DictReader(open('tripadv.csv'), delimiter='\t')
-    data = [dict(d) for d in rd]
-    try:
-        for row in data:
-            blob = TextBlob(row["text"])
-            if blob:
-                if blob.sentiment.polarity < 0:
-                    sentiment = "negative"
-                elif blob.sentiment.polarity == 0:
-                    sentiment = "neutral"
-                else:
-                    sentiment = "positive"
+
+#     for index, document in df_iter:
+#             es.index(index="stock-a",
+#                 doc_type="test-type",
+#                 body={
+#                 "date": document["Date"],
+#                 "close_price": float(document["Close"])})
+
+# def tripadvisor():
+#     rd = csv.DictReader(open('tripadv.csv'), delimiter='\t')
+#     data = [dict(d) for d in rd]
+#     try:
+#         for row in data:
+#             blob = TextBlob(row["text"])
+#             if blob:
+#                 if blob.sentiment.polarity < 0:
+#                     sentiment = "negative"
+#                 elif blob.sentiment.polarity == 0:
+#                     sentiment = "neutral"
+#                 else:
+#                     sentiment = "positive"
             
                 
-            row.update({'source':row['location'].split(' - ')[0],
-                        'dest':row['location'].split(' - ')[1],
-                        "polarity": blob.sentiment.polarity,
-                        "sentiment": sentiment}
-                        )
-            src = geocoder.osm(row['source']).latlng
-            dest = geocoder.osm(row['dest']).latlng
+#             row.update({'source':row['location'].split(' - ')[0],
+#                         'dest':row['location'].split(' - ')[1],
+#                         "polarity": blob.sentiment.polarity,
+#                         "sentiment": sentiment}
+#                         )
+#             src = geocoder.osm(row['source']).latlng
+#             dest = geocoder.osm(row['dest']).latlng
 
-            mapping = {
-            "mappings": {
-                    "properties": {
-                        "rtext": {
-                            "type": "keyword"
-                        },
-                        "j_type": {
-                            "type": "keyword"
-                        },
-                        "class": {
-                            "type": "keyword"
-                        },
-                        "source": {
-                            "type": "keyword"
-                        },
-                        "dest": {
-                            "type": "keyword"
-                        },
-                        "source_geo": {
-                            "type": "geo_point"
-                        },
-                        "dest_geo": {
-                            "type": "geo_point"
-                        },
+#             mapping = {
+#             "mappings": {
+#                     "properties": {
+#                         "rtext": {
+#                             "type": "keyword"
+#                         },
+#                         "j_type": {
+#                             "type": "keyword"
+#                         },
+#                         "class": {
+#                             "type": "keyword"
+#                         },
+#                         "source": {
+#                             "type": "keyword"
+#                         },
+#                         "dest": {
+#                             "type": "keyword"
+#                         },
+#                         "source_geo": {
+#                             "type": "geo_point"
+#                         },
+#                         "dest_geo": {
+#                             "type": "geo_point"
+#                         },
                 
-                }
-            }
-        }
+#                 }
+#             }
+#         }
 
-            es.indices.create(index='tripadv', body=mapping, ignore=400)
+#             es.indices.create(index='tripadv', body=mapping, ignore=400)
 
-            es.index(index="tripadv",
-            body={
-                'rtext':row['text'],
-                'j_type':row['type'],
-                'class':row['class'],
-                'source':row['source'],
-                'dest':row['dest'],
-                'source_geo':{'lat':src[0],'lon':src[1]},
-                'dest_geo':{'lat':dest[0],'lon':dest[1]},
-                "polarity": blob.sentiment.polarity,
-                "sentiment": sentiment
-                }
-                )
+#             es.index(index="tripadv",
+#             body={
+#                 'rtext':row['text'],
+#                 'j_type':row['type'],
+#                 'class':row['class'],
+#                 'source':row['source'],
+#                 'dest':row['dest'],
+#                 'source_geo':{'lat':src[0],'lon':src[1]},
+#                 'dest_geo':{'lat':dest[0],'lon':dest[1]},
+#                 "polarity": blob.sentiment.polarity,
+#                 "sentiment": sentiment
+#                 }
+#                 )
 
-            print(row)
-    except:
-        pass
+#             print(row)
+#     except:
+#         pass
 
 def singleAnalyzeTwitter(data):
     dict_data = data
