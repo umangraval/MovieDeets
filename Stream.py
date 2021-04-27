@@ -86,6 +86,9 @@ class TweetStreamListener(StreamListener):
                         "sentiment": {
                             "type": "keyword"
                         },
+                        "place": {
+                            "type": "keyword"
+                        },
                         "location": {
                             "type": "geo_point"
                         },
@@ -95,7 +98,7 @@ class TweetStreamListener(StreamListener):
         }
 
             es.indices.create(index='logstash-movie', body=mapping, ignore=400)
-            print(sentiment, tweet.sentiment.polarity, dict_data["text"], src[0], src[1])
+            print(sentiment, dict_data["text"], dict_data["user"]["location"])
 
             es.index(index="logstash-movie",
                     #  doc_type="test-type",
@@ -108,6 +111,7 @@ class TweetStreamListener(StreamListener):
                            "polarity": tweet.sentiment.polarity,
                            "subjectivity": tweet.sentiment.subjectivity,
                            "sentiment": sentiment,
+                           "place": dict_data["user"]["location"],
                            "location": {'lat':src[0],'lon':src[1]}})
         
         
