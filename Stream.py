@@ -37,6 +37,11 @@ auth = tweepy.OAuthHandler(consumer_key,consumer_secret)
 auth.set_access_token(access_token,access_token_secret)
 api = tweepy.API(auth)
 
+score = {
+    "negative": 1,
+    "neutral": 6,
+    "positive": 9,
+}
 # twitter responses
 class TweetStreamListener(StreamListener):
       def on_data(self, data):
@@ -92,14 +97,19 @@ class TweetStreamListener(StreamListener):
                         "location": {
                             "type": "geo_point"
                         },
-                
+                        "rating": {
+                            "type": "number"
+                        },
                 }
             }
         }
 
             es.indices.create(index='logstash-movie', body=mapping, ignore=400)
             print(sentiment, dict_data["text"], dict_data["user"]["location"])
-
+            # prev = es.search(index='logstash-movie', size=1, sort='date:desc')
+            # prev_rating = prev["hits"]["hits"][0]["_source"]["rating"]
+            # update_rating = (prev_rating + score[sentiment])/2
+            # print(prev_rating, score[sentiment], update_rating)
             es.index(index="logstash-movie",
                     #  doc_type="test-type",
                      body={"author": dict_data["user"]["screen_name"],
@@ -112,7 +122,8 @@ class TweetStreamListener(StreamListener):
                            "subjectivity": tweet.sentiment.subjectivity,
                            "sentiment": sentiment,
                            "place": dict_data["user"]["location"],
-                           "location": {'lat':src[0],'lon':src[1]}})
+                           "location": {'lat':src[0],'lon':src[1]},
+                           "rating": score[sentiment]})
         
         
         return True
