@@ -132,78 +132,6 @@ def on_error(self, status):
     print(status)
 
 
-# def webscrape():
-#     rd = csv.DictReader(open('tripadv.csv'), delimiter='\t')
-#     data = [dict(d) for d in rd]
-#     try:
-#         for row in data:
-#             blob = TextBlob(row["text"])
-#             if blob:
-#                 if blob.sentiment.polarity < 0:
-#                     sentiment = "negative"
-#                 elif blob.sentiment.polarity == 0:
-#                     sentiment = "neutral"
-#                 else:
-#                     sentiment = "positive"
-            
-                
-#             row.update({'source':row['location'].split(' - ')[0],
-#                         'dest':row['location'].split(' - ')[1],
-#                         "polarity": blob.sentiment.polarity,
-#                         "sentiment": sentiment}
-#                         )
-#             src = geocoder.osm(row['source']).latlng
-#             dest = geocoder.osm(row['dest']).latlng
-
-#             mapping = {
-#             "mappings": {
-#                     "properties": {
-#                         "rtext": {
-#                             "type": "keyword"
-#                         },
-#                         "j_type": {
-#                             "type": "keyword"
-#                         },
-#                         "class": {
-#                             "type": "keyword"
-#                         },
-#                         "source": {
-#                             "type": "keyword"
-#                         },
-#                         "dest": {
-#                             "type": "keyword"
-#                         },
-#                         "source_geo": {
-#                             "type": "geo_point"
-#                         },
-#                         "dest_geo": {
-#                             "type": "geo_point"
-#                         },
-                
-#                 }
-#             }
-#         }
-
-#             es.indices.create(index='tripadv', body=mapping, ignore=400)
-
-#             es.index(index="tripadv",
-#             body={
-#                 'rtext':row['text'],
-#                 'j_type':row['type'],
-#                 'class':row['class'],
-#                 'source':row['source'],
-#                 'dest':row['dest'],
-#                 'source_geo':{'lat':src[0],'lon':src[1]},
-#                 'dest_geo':{'lat':dest[0],'lon':dest[1]},
-#                 "polarity": blob.sentiment.polarity,
-#                 "sentiment": sentiment
-#                 }
-#                 )
-
-#             print(row)
-#     except:
-#         pass
-
 def singleAnalyzeTwitter(data):
     dict_data = data
     print(dict_data)
@@ -236,7 +164,7 @@ def singleAnalyzeTwitter(data):
                         "subjectivity": tweet.sentiment.subjectivity,
                         "sentiment": sentiment})
         
-def getMovieName ():
+def getMovieName():
     movie = entry1.get();
     label1 = tk.Label(root, text="Check Kibana For Visualization")
     canvas1.create_window(200, 230, window=label1)
@@ -254,6 +182,8 @@ def getMovieName ():
         except KeyboardInterrupt:
             stream.disconnect()
             break
+        except:
+            continue
 
 
 if __name__ == '__main__':
