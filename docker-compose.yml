@@ -6,12 +6,12 @@ services:
     environment:
       - discovery.type=single-node
       - cluster.name=docker-cluster
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xmx1024m -Xms1024m"
+      # - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms750m -Xmx750m"
     ports:
       - "9200:9200"
-    # volumes:
-    #   - ./data:/usr/share/elasticsearch/data
+    volumes:
+      - ./data:/usr/share/elasticsearch/data
 
   kibana:
     image: kibana:7.4.1

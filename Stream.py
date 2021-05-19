@@ -19,15 +19,6 @@ import tweepy as tw
 import tkinter as tk
 
 
-# reddit = praw.Reddit(
-#       user_agent="Comment section stream",
-#      client_id
-
-# consumer_key = '<Twitter_Consumer_Key>'
-# consumer_secret = '<Twitter_Consumer_Secret>'
-# access_token = '<Twitter_Access_Token>'
-# access_token_secret = '<Twitter_Access_Token_Secret>'
-
 consumer_key = "2bqLbdibv3Gs8xIYYpwluzkSG"
 consumer_secret = "cfQAOv6RohJUYP3UIz3iETfRIYo3Ua3NvKM8NriHMjRSATFkP9"
 access_token = "1374563238772273152-mqYqtsLQG9u1GIPnWeSQkNAsJDlYzT"
@@ -41,6 +32,11 @@ auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
+score = {
+    "negative": 1,
+    "neutral": 6,
+    "positive": 9,
+}
 # twitter responses
 
 
@@ -99,14 +95,18 @@ class TweetStreamListener(StreamListener):
                         "location": {
                             "type": "geo_point"
                         },
-
-                    }
+                        "rating": {
+                            "type": "number"
+                        },
                 }
             }
 
             es.indices.create(index='logstash-movie', body=mapping, ignore=400)
             print(sentiment, dict_data["text"], dict_data["user"]["location"])
-
+            # prev = es.search(index='logstash-movie', size=1, sort='date:desc')
+            # prev_rating = prev["hits"]["hits"][0]["_source"]["rating"]
+            # update_rating = (prev_rating + score[sentiment])/2
+            # print(prev_rating, score[sentiment], update_rating)
             es.index(index="logstash-movie",
                      #  doc_type="test-type",
                      body={"author": dict_data["user"]["screen_name"],
@@ -119,7 +119,9 @@ class TweetStreamListener(StreamListener):
                            "subjectivity": tweet.sentiment.subjectivity,
                            "sentiment": sentiment,
                            "place": dict_data["user"]["location"],
-                           "location": {'lat': src[0], 'lon': src[1]}})
+                           "location": {'lat': src[0], 'lon': src[1]},
+                           "rating": score[sentiment]})
+
 
         return True
 
@@ -127,78 +129,6 @@ class TweetStreamListener(StreamListener):
 def on_error(self, status):
     print(status)
 
-
-# def webscrape():
-#     rd = csv.DictReader(open('tripadv.csv'), delimiter='\t')
-#     data = [dict(d) for d in rd]
-#     try:
-#         for row in data:
-#             blob = TextBlob(row["text"])
-#             if blob:
-#                 if blob.sentiment.polarity < 0:
-#                     sentiment = "negative"
-#                 elif blob.sentiment.polarity == 0:
-#                     sentiment = "neutral"
-#                 else:
-#                     sentiment = "positive"
-
-
-#             row.update({'source':row['location'].split(' - ')[0],
-#                         'dest':row['location'].split(' - ')[1],
-#                         "polarity": blob.sentiment.polarity,
-#                         "sentiment": sentiment}
-#                         )
-#             src = geocoder.osm(row['source']).latlng
-#             dest = geocoder.osm(row['dest']).latlng
-
-#             mapping = {
-#             "mappings": {
-#                     "properties": {
-#                         "rtext": {
-#                             "type": "keyword"
-#                         },
-#                         "j_type": {
-#                             "type": "keyword"
-#                         },
-#                         "class": {
-#                             "type": "keyword"
-#                         },
-#                         "source": {
-#                             "type": "keyword"
-#                         },
-#                         "dest": {
-#                             "type": "keyword"
-#                         },
-#                         "source_geo": {
-#                             "type": "geo_point"
-#                         },
-#                         "dest_geo": {
-#                             "type": "geo_point"
-#                         },
-
-#                 }
-#             }
-#         }
-
-#             es.indices.create(index='tripadv', body=mapping, ignore=400)
-
-#             es.index(index="tripadv",
-#             body={
-#                 'rtext':row['text'],
-#                 'j_type':row['type'],
-#                 'class':row['class'],
-#                 'source':row['source'],
-#                 'dest':row['dest'],
-#                 'source_geo':{'lat':src[0],'lon':src[1]},
-#                 'dest_geo':{'lat':dest[0],'lon':dest[1]},
-#                 "polarity": blob.sentiment.polarity,
-#                 "sentiment": sentiment
-#                 }
-#                 )
-
-#             print(row)
-#     except:
-#         pass
 
 def singleAnalyzeTwitter(data):
     dict_data = data
