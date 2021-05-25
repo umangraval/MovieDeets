@@ -6,7 +6,7 @@ services:
     environment:
       - discovery.type=single-node
       - cluster.name=docker-cluster
-        #- bootstrap.memory_lock=true
+      # - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms750m -Xmx750m"
     ports:
       - "9200:9200"

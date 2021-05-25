@@ -3,8 +3,9 @@ from tweepy.streaming import StreamListener
 import tweepy
 from tweepy import OAuthHandler
 from tweepy import Stream
-from textblob import TextBlob #predict the sentiment of Tweet, see 'https://textblob.readthedocs.io/en/dev/'
-from elasticsearch import Elasticsearch,helpers 
+# predict the sentiment of Tweet, see 'https://textblob.readthedocs.io/en/dev/'
+from textblob import TextBlob
+from elasticsearch import Elasticsearch, helpers
 import datetime
 from datetime import datetime
 import calendar
@@ -16,25 +17,23 @@ import yfinance as yf
 from http.client import IncompleteRead
 import tweepy as tw
 import tkinter as tk
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 
+consumer_key = os.environ.get("consumer_key")
+consumer_secret = os.environ.get("consumer_secret")
+access_token = os.environ.get("access_token")
+access_token_secret = os.environ.get("access_token_secret")
 
-# consumer_key = '<Twitter_Consumer_Key>'
-# consumer_secret = '<Twitter_Consumer_Secret>'
-# access_token = '<Twitter_Access_Token>'
-# access_token_secret = '<Twitter_Access_Token_Secret>'
-
-consumer_key = "2bqLbdibv3Gs8xIYYpwluzkSG"
-consumer_secret = "cfQAOv6RohJUYP3UIz3iETfRIYo3Ua3NvKM8NriHMjRSATFkP9"
-access_token = "1374563238772273152-mqYqtsLQG9u1GIPnWeSQkNAsJDlYzT"
-access_token_secret = "vUESdHBtnzhpwlWgeCguhVwqaoALEgUipVTO3HYoAFrLA"
 
 
 # create instance of elasticsearch
 es = Elasticsearch()
 
-auth = tweepy.OAuthHandler(consumer_key,consumer_secret)
-auth.set_access_token(access_token,access_token_secret)
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
 score = {
@@ -43,10 +42,13 @@ score = {
     "positive": 9,
 }
 # twitter responses
+
+
 class TweetStreamListener(StreamListener):
-      def on_data(self, data):
+    def on_data(self, data):
         dict_data = json.loads(data)
-        tweet = TextBlob(dict_data["text"]) if "text" in dict_data.keys() else None
+        tweet = TextBlob(dict_data["text"]
+                         ) if "text" in dict_data.keys() else None
         if tweet:
             if tweet.sentiment.polarity < 0:
                 sentiment = "negative"
@@ -54,18 +56,18 @@ class TweetStreamListener(StreamListener):
                 sentiment = "neutral"
             else:
                 sentiment = "positive"
-            
+
             src = geocoder.osm(dict_data["user"]["location"]).latlng
             if src == None:
-                src = [0,0]
-                        
-            if len(dict_data["entities"]["hashtags"])>0:
-                hashtags=dict_data["entities"]["hashtags"][0]["text"].title()
+                src = [0, 0]
+
+            if len(dict_data["entities"]["hashtags"]) > 0:
+                hashtags = dict_data["entities"]["hashtags"][0]["text"].title()
             else:
-                hashtags="None"
+                hashtags = "None"
 
             mapping = {
-            "mappings": {
+                "mappings": {
                     "properties": {
                         "author": {
                             "type": "keyword"
@@ -100,9 +102,9 @@ class TweetStreamListener(StreamListener):
                         "rating": {
                             "type": "number"
                         },
+                    }
                 }
             }
-        }
 
             es.indices.create(index='logstash-movie', body=mapping, ignore=400)
             print(sentiment, dict_data["text"], dict_data["user"]["location"])
@@ -111,31 +113,24 @@ class TweetStreamListener(StreamListener):
             # update_rating = (prev_rating + score[sentiment])/2
             # print(prev_rating, score[sentiment], update_rating)
             es.index(index="logstash-movie",
-                    #  doc_type="test-type",
+                     #  doc_type="test-type",
                      body={"author": dict_data["user"]["screen_name"],
-                           "followers":dict_data["user"]["followers_count"],
-                           #parse the milliscond since epoch to elasticsearch and reformat into datatime stamp in Kibana later
+                           "followers": dict_data["user"]["followers_count"],
+                           # parse the milliscond since epoch to elasticsearch and reformat into datatime stamp in Kibana later
                            "date": datetime.strptime(dict_data["created_at"], '%a %b %d %H:%M:%S %z %Y'),
-                           "message": dict_data["text"]  if "text" in dict_data.keys() else " ",
-                           "hashtags":hashtags,
+                           "message": dict_data["text"] if "text" in dict_data.keys() else " ",
+                           "hashtags": hashtags,
                            "polarity": tweet.sentiment.polarity,
                            "subjectivity": tweet.sentiment.subjectivity,
                            "sentiment": sentiment,
                            "place": dict_data["user"]["location"],
-                           "location": {'lat':src[0],'lon':src[1]},
+                           "location": {'lat': src[0], 'lon': src[1]},
                            "rating": score[sentiment]})
-        
-        
-        return True
-        
-def on_error(self, status):
-    print(status)
-
 
 def singleAnalyzeTwitter(data):
     dict_data = data
     print(dict_data)
-    
+
     tweet = TextBlob(dict_data["text"]) if "text" in dict_data.keys() else None
     if tweet:
         if tweet.sentiment.polarity < 0:
@@ -144,15 +139,14 @@ def singleAnalyzeTwitter(data):
             sentiment = "neutral"
         else:
             sentiment = "positive"
-        
-        print(sentiment, tweet.sentiment.polarity, dict_data["text"])
-        
 
-        if len(dict_data["entities"]["hashtags"])>0:
-            hashtags=dict_data["entities"]["hashtags"][0]["text"].title()
+        print(sentiment, tweet.sentiment.polarity, dict_data["text"])
+
+        if len(dict_data["entities"]["hashtags"]) > 0:
+            hashtags = dict_data["entities"]["hashtags"][0]["text"].title()
         else:
-            hashtags="None"
-                    
+            hashtags = "None"
+
         es.index(index="logstash-a",
                     doc_type="test-type",
                     body={"author": dict_data["user"]["screen_name"],
@@ -189,14 +183,14 @@ def getMovieName():
 if __name__ == '__main__':
     listener = TweetStreamListener()
     auth = OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)    
+    auth.set_access_token(access_token, access_token_secret)
     # tweets = tweepy.Cursor(api.search, q ="@Mortal -brown -tantum").items(10000)
-  
+
     # for tweet in tweets:
     #     print(tweet.user.location)
     #     singleAnalyzeTwitter(tweet._json)
-    root= tk.Tk()
-    canvas1 = tk.Canvas(root, width = 400, height = 300)
+    root = tk.Tk()
+    canvas1 = tk.Canvas(root, width=400, height=300)
     canvas1.pack()
 
     label1 = tk.Label(root, text='Search data for the movie')
@@ -207,12 +201,10 @@ if __name__ == '__main__':
     label2.config(font=('helvetica', 10))
     canvas1.create_window(200, 100, window=label2)
 
-    entry1 = tk.Entry (root) 
+    entry1 = tk.Entry(root)
     canvas1.create_window(200, 140, window=entry1)
 
-    button1 = tk.Button(text='Add', command=getMovieName, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
+    button1 = tk.Button(text='Add', command=getMovieName,
+                        bg='brown', fg='white', font=('helvetica', 9, 'bold'))
     canvas1.create_window(200, 180, window=button1)
     root.mainloop()
-
-    
-
