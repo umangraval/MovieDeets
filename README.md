@@ -1,4 +1,4 @@
-# CSE3021-SIN
+# MovieDeets - Know Your Movies
 Our platform used the data from **Twitter and Reddit API to stream and filters** extraneous anomalies, cleans the data, and then it runs sentimental analysis also while collecting important metadata and fields necessary for **geotagging.** It stores everything on elastic search instance for further processing in **Kibana Dashboard.**
 
 The data is processed and displayed interactively using a bar graph, pie chart, heatmap, word map and dials, which makes visualising and viewing experience smoother.
