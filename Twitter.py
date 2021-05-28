@@ -17,7 +17,6 @@ import yfinance as yf
 from http.client import IncompleteRead
 import tweepy as tw
 import tkinter as tk
-import os
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -41,8 +40,8 @@ score = {
     "neutral": 6,
     "positive": 9,
 }
-# twitter responses
 
+# twitter responses
 
 class TweetStreamListener(StreamListener):
     def on_data(self, data):
@@ -163,6 +162,7 @@ def getMovieName():
     label1 = tk.Label(root, text="Check Kibana For Visualization")
     canvas1.create_window(200, 230, window=label1)
     root.destroy()
+    
     while True:
         try:
             stream = Stream(auth, listener)
